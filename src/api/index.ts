@@ -1,15 +1,10 @@
-import express, {Request, Response} from 'express';
-
-import articleRoute from './routes/articleRouter';
+import express from 'express';
+import authorRoutes from './routes/author-routes';
+import articleRoutes from './routes/articleRouter';
 
 const router = express.Router();
 
-router.get('/', (req: Request, res: Response) => {
-  res.json({
-    message: 'media api v1',
-  });
-});
-
-router.use('/articles', articleRoute);
+router.use('/authors', authorRoutes);
+router.use('/articles', articleRoutes);
 
 export default router;

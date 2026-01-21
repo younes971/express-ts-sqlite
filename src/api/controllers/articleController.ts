@@ -1,5 +1,4 @@
-import {NextFunction, Request, Response} from 'express';
-import {Article} from '../../types/LocalTypes';
+import { NextFunction, Request, Response } from 'express';
 import {
   createArticle,
   deleteArticle,
@@ -9,12 +8,14 @@ import {
 } from '../models/articleModel';
 import CustomError from '../../classes/CustomError';
 
-const articlesGet = (req: Request, res: Response<Article[]>) => {
+// GET all articles
+const articlesGet = (req: Request, res: Response) => {
   const articles = getAllArticles();
   res.json(articles);
 };
 
-const articleGet = (req: Request<{id: string}>, res: Response<Article>) => {
+// GET one article
+const articleGet = (req: Request<{ id: string }>, res: Response) => {
   try {
     const article = getArticle(Number(req.params.id));
     res.json(article);
@@ -23,9 +24,10 @@ const articleGet = (req: Request<{id: string}>, res: Response<Article>) => {
   }
 };
 
+// POST article
 const articlePost = (
-  req: Request<unknown, unknown, Article>,
-  res: Response<Article>,
+  req: Request,
+  res: Response,
   next: NextFunction,
 ) => {
   try {
@@ -36,9 +38,10 @@ const articlePost = (
   }
 };
 
+// PUT article
 const articlePut = (
-  req: Request<{id: string}, unknown, Article>,
-  res: Response<Article>,
+  req: Request<{ id: string }>,
+  res: Response,
   next: NextFunction,
 ) => {
   try {
@@ -46,6 +49,7 @@ const articlePut = (
       Number(req.params.id),
       req.body.title,
       req.body.description,
+      req.body.author_id
     );
     res.json(article);
   } catch (error) {
@@ -53,17 +57,27 @@ const articlePut = (
   }
 };
 
+// DELETE article
 const articleDelete = (
-  req: Request<{id: string}>,
-  res: Response<unknown>,
+  req: Request<{ id: string }>,
+  res: Response,
   next: NextFunction,
 ) => {
   try {
-    deleteArticle(Number(req.params.id));
+    deleteArticle(
+      Number(req.params.id),
+      req.body.author_id
+    );
     res.status(204).end();
   } catch (error) {
     next(new CustomError((error as Error).message, 500));
   }
 };
 
-export {articlesGet, articleGet, articlePost, articlePut, articleDelete};
+export {
+  articlesGet,
+  articleGet,
+  articlePost,
+  articlePut,
+  articleDelete
+};
