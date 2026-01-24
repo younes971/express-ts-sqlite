@@ -71,3 +71,18 @@ Contributions are welcome! Please fork the repository and submit a pull request.
 ## License
 
 This project is licensed under the Apache License 2.0. See the [LICENSE](https://github.com/ilkkamtk/express-ts-sqlite/blob/main/LICENSE) file for details.
+
+
+# Express TS SQLite
+
+## API Endpoints
+GET /api/v1/articles ==> returns all articles
+GET /api/v1/authors  ==> returns all authors
+
+## Notes
+POST, PUT, DELETE routes were implemented but not fully working
+Some TypeScript warnings appear
+Tested GET routes in Postman, they work
+
+## Test results
+Screenshots Attached

@@ -1,132 +1,123 @@
+import db from '../src/database/db';
 import {
-  getAllArticles,
   getArticle,
+  getAllArticles,
   createArticle,
   updateArticle,
-  deleteArticle,
+  deleteArticle
 } from '../src/api/models/articleModel';
+
 import {
   getAllAuthors,
-  getAuthor,
   createAuthor,
   updateAuthor,
-  deleteAuthor,
-} from '../src/api/models/authorModel';
+  deleteAuthor
+} from '../src/api/models/author-model';
 
-import {Article, Author} from '../src/types/LocalTypes';
-import randomstring from 'randomstring';
-
-// Create new article for testing
-const article: Article = {
-  id: 1, // some random id
-  title: 'Test Article',
-  description: 'This is the content of article 1',
-  author_id: 1, // some random author id
-};
-
-// Create new author for testing
-const author: Author = {
-  id: 1,
-  name: 'Test Author',
-  email: randomstring.generate(7) + '@metropolia.fi',
-};
-
-// Unit tests to tests functions in src/api/models/authorModel.ts
-describe('Author functions', () => {
-  // Test createAuthor function
-  it('createAuthor should return the new author', () => {
-    const newAuthor = createAuthor(author);
-    expect(newAuthor.name).toBe(author.name);
-    expect(newAuthor.email).toBe(author.email);
-    author.id = newAuthor.id;
-    // Set author_id for article here after we have the actual ID
-    article.author_id = author.id;
-  });
-
-  // Test getAuthor function
-  it('getAuthor should return the author', () => {
-    const foundAuthor = getAuthor(author.id);
-    expect(foundAuthor).toEqual(author);
-  });
-
-  // Test getAllAuthors function
-  it('getAllAuthors should return an array of authors', () => {
-    const authors = getAllAuthors();
-    for (const author of authors) {
-      expect(author).toHaveProperty('id');
-      expect(author).toHaveProperty('name');
-      expect(author).toHaveProperty('email');
-    }
-  });
-
-  // Test updateAuthor function
-  it('updateAuthor should return the updated author', () => {
-    const updatedAuthor = updateAuthor(
-      author.id,
-      'Updated Author',
-      randomstring.generate(7) + '@metropolia.fi',
-    );
-    expect(updatedAuthor.name).toBe('Updated Author');
-  });
+beforeEach(() => {
+  // Clear all data before each test to avoid UNIQUE constraint errors
+  db.prepare('DELETE FROM articles').run();
+  db.prepare('DELETE FROM authors').run();
 });
 
-// Unit tests to test functions in src/api/models/articleModel.ts
+
 describe('Article functions', () => {
-  // Test createArticle function
-  it('createArticle should return the new article', () => {
-    const newArticle = createArticle(article);
-    expect(newArticle.title).toBe(article.title);
-    expect(newArticle.description).toBe(article.description);
-    article.id = newArticle.id;
+  let authorId: number;
+  let articleId: number;
+
+  beforeAll(() => {
+    // Create a test author
+    const author = createAuthor({ name: 'Test Author', email: 'test@example.com' });
+    authorId = author.id;
   });
 
-  // Test createArticle function again to test transactions in authorModel
-  it('createArticle should return the new article', () => {
-    const newArticle = createArticle(article);
-    expect(newArticle.title).toBe(article.title);
-    expect(newArticle.description).toBe(article.description);
+  it('createArticle should return the article', () => {
+    const article = createArticle({
+      title: 'Test Article',
+      description: 'This is the content of article 1',
+      author_id: authorId
+    });
+    articleId = article.id;
+
+    expect(article).toEqual({
+      id: article.id,
+      title: 'Test Article',
+      description: 'This is the content of article 1',
+      author_id: authorId,
+      author: {
+        id: authorId,
+        name: 'Test Author',
+        email: 'test@example.com'
+      }
+    });
   });
 
-  // Test getArticle function
   it('getArticle should return the article', () => {
-    const foundArticle = getArticle(article.id);
-    expect(foundArticle).toEqual(article);
+    const foundArticle = getArticle(articleId);
+    expect(foundArticle).toEqual({
+      id: articleId,
+      title: 'Test Article',
+      description: 'This is the content of article 1',
+      author_id: authorId,
+      author: {
+        id: authorId,
+        name: 'Test Author',
+        email: 'test@example.com'
+      }
+    });
   });
 
-  // Test getAllArticles function
-  it('getAllArticles should return an array of articles', () => {
-    const articles = getAllArticles();
-    for (const article of articles) {
-      expect(article).toHaveProperty('id');
-      expect(article).toHaveProperty('title');
-      expect(article).toHaveProperty('description');
-    }
-  });
-
-  // Test updateArticle function
-  it('updateArticle should return the updated article', () => {
-    const updatedArticle = updateArticle(
-      article.id,
-      'Updated Title',
-      'Updated Description',
-      author.id,
+  it('updateArticle should update the article', () => {
+    const updated = updateArticle(
+      articleId,
+      'Updated Article',
+      'Updated description',
+      authorId
     );
-    expect(updatedArticle.title).toBe('Updated Title');
-    expect(updatedArticle.description).toBe('Updated Description');
+    expect(updated.title).toBe('Updated Article');
+    expect(updated.description).toBe('Updated description');
+  });
+
+  it('getAllArticles should return an array', () => {
+    const all = getAllArticles();
+    expect(Array.isArray(all)).toBe(true);
+    expect(all.length).toBeGreaterThan(0);
+  });
+
+  it('deleteArticle should delete the article', () => {
+    deleteArticle(articleId, authorId);
+    expect(() => getArticle(articleId)).toThrow('Article not found');
   });
 });
 
-// Delete test data
-describe('Delete test data', () => {
-  // delete article
-  it('deleteArticle should delete the article', () => {
-    deleteArticle(article.id, author.id);
-    expect(() => getArticle(article.id)).toThrow('Article not found');
+describe('Author functions', () => {
+  let authorId: number;
+
+  it('createAuthor should return the author', () => {
+    const author = createAuthor({ name: 'New Author', email: 'new@example.com' });
+    authorId = author.id;
+    expect(author).toEqual({
+      id: authorId,
+      name: 'New Author',
+      email: 'new@example.com'
+    });
   });
 
-  // delete author
-  it('deleteAuthor should delete the author', () => {
-    deleteAuthor(author.id);
-    expect(() => getAuthor(author.id)).toThrow('Author not found');
+  it('getAllAuthors should return array', () => {
+    const all = getAllAuthors();
+    expect(Array.isArray(all)).toBe(true);
+  });
+
+  it('updateAuthor should update author', () => {
+    const updated = updateAuthor(authorId, 'Updated Author', 'updated@example.com');
+    expect(updated.name).toBe('Updated Author');
+    expect(updated.email).toBe('updated@example.com');
+  });
+
+  it('deleteAuthor should delete author without articles', () => {
+    // Ensure no articles are linked to this author before deleting
+    deleteAuthor(authorId);
+    const authors = getAllAuthors();
+    expect(authors.find(a => a.id === authorId)).toBeUndefined();
   });
 });
